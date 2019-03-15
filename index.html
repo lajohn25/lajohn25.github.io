@@ -83,9 +83,8 @@
 
 <body>
     <div id="menu-container">
+        <input id="file-input" type="file" name="name" style="display: none;" />
         <ul>
-            <input id="file-input" type="file" name="name" style="display: none;" />
-
             <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn" id="FileMenu">File</a>
                 <div class="dropdown-content">
@@ -109,14 +108,14 @@
             <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Examples</a>
                 <div class="dropdown-content">
-                    <a class="model" href="colorbrain.mz3">fMRI</a>
-                    <a class="model" href="aal.mz3">Template</a>
-                    <a class="model" href="Right.mz3">Right</a>
-                    <a class="model" href="Right_Smooth.mz3">Right Smooth</a>
-                    <a class="model" href="Left.mz3">Left</a>
-                    <a class="model" href="Left_Smooth.mz3">Left Smooth</a>
-                    <a class="model" href="Cortex.mz3">Cortex</a>
-                    <a class="overlay" href="overlay.mz3">Add Overlay</a>
+                    <a class="viewBtn" id="_colorbrain.mz3">fMRI</a>
+                    <a class="viewBtn" id="_aal.mz3">Template</a>
+                    <a class="viewBtn" id="_Right.mz3">Right</a>
+                    <a class="viewBtn" id="_Right_Smooth.mz3">Right Smooth</a>
+                    <a class="viewBtn" id="_Left.mz3">Left</a>
+                    <a class="viewBtn" id="_Left_Smooth.mz3">Left Smooth</a>
+                    <a class="viewBtn" id="_Cortex.mz3">Cortex</a>
+                    <a class="divider" id="^overlay.mz3">Add Overlay</a>
                 </div>
             </li>
         </ul>
@@ -129,7 +128,7 @@
         <script src="MZ3Loader.js"></script>
         <script>
             var container = window.document.getElementById('three-container');
-            //file open dialog
+            //file open dialogs
             var openDialog = document.createElement('input');
             openDialog.type = 'file';
             openDialog.onchange = e => {
@@ -139,9 +138,9 @@
             openOverlayDialog.type = 'file';
             openOverlayDialog.onchange = e => {
                     loadGeometry(e.target.files[0], false, true);
-                }
-                //use pre-baked AO texture: 1x256 B/W gradient
-                // https://rawgit.com/looeee/three.js/per_vertex_ao/examples/webgl_per_vertex_ao.html
+            }
+            //use pre-baked AO texture: 1x256 B/W gradient
+            // https://rawgit.com/looeee/three.js/per_vertex_ao/examples/webgl_per_vertex_ao.html
             var aoMap = new THREE.TextureLoader().load('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAYAAAAxWXB3AAAAIElEQVQ4T2NkYGD4z8TExAACo/RoOIymg5GTDxgZGRkA/oMD/vOwS0YAAAAASUVORK5CYII=');
             var parameters = {
                 axesHelper: false,
@@ -164,8 +163,8 @@
             var axesHelper;
             var menuHeight = 6 + document.getElementById('menu-container').clientHeight;
             var isPerspective = true;
-            var maxDistance = 100.0,
-                minDistance = 1.5;
+            var maxDistance = 100.0;
+            var  minDistance = 1.5;
             var defaultDistance = 5.0;
             var ambientLight = new THREE.AmbientLight(0xffffff, parameters.ambientIntensity);
             var light = new THREE.PointLight(0xffffff, 1.0 - parameters.ambientIntensity, 100);
@@ -175,7 +174,6 @@
             var mesh = null;
             var overlay = null;
             init();
-            render();
 
             function initCamera() {
                 if (isPerspective)
@@ -221,34 +219,6 @@
                 buttons = document.getElementsByClassName("divider");
                 for (let i = 0; i < buttons.length; i++)
                     buttons[i].addEventListener("click", onButtonClick, false);
-                document.querySelectorAll('a.model').forEach(function(anchor) {
-                    anchor.addEventListener('click', function(e) {
-                        var el = this.parentNode;
-                        el.style.display = "none";
-                        setTimeout(function() {
-                            el.style.removeProperty("display");
-                        }, 5);
-                        e.preventDefault();
-                        loadGeometry(anchor.href);
-                        controls.update;
-                        render();
-                        forceRefresh();
-                    });
-                });
-                document.querySelectorAll('a.overlay').forEach(function(anchor) {
-                    anchor.addEventListener('click', function(e) {
-                         var el = this.parentNode;
-                        el.style.display = "none";
-                        setTimeout(function() {
-                            el.style.removeProperty("display");
-                        }, 5);
-                        e.preventDefault();
-                        loadGeometry(anchor.href, true, true);
-                        controls.update;
-                        render();
-                        forceRefresh();
-                    });
-                });
                 // GUI
                 var gui = new dat.GUI();
                 var folderG = gui.addFolder('Scene');
@@ -297,25 +267,25 @@
                 ofolder.close();
                 gui.open();
                 //load startup mesh
-                loadGeometry('Right.mz3');
+                loadGeometry('Right.mz3', true, false, 'overlay.mz3');
                 window.addEventListener('resize', onWindowResize, false);
                 onWindowResize();
-                forceRefresh();
             }
 
-            function loadGeometry(url, isURL = true, isOverlay = false) {
+
+    		function loadGeometry(url, isURL = true, isOverlay = false, urlOverlay = '') {
+                var fnm = url;
+                if (!isURL) {
+                    fnm = url.name;
+                }
                 if (busy) { //promises should reduce this issue
-                    console.log('Too busy to load ' + url);
+                    console.log('Too busy to load ' + fnm);
                     return false;
                 }
                 busy = true;
+                console.log('Loading "'+fnm+'"');
                 //next lines to detect format
-                var extension = "";
-                if (isURL) {
-                    extension = url.split('.').pop().toLowerCase();
-                } else {
-                    extension = url.name.split('.').pop().toLowerCase();
-                }
+                var extension = fnm.split('.').pop().toLowerCase();
                 var isMz3 = (extension === 'mz3');
                 if (!isMz3) {
                     alert("Images should be in mz3 format");
@@ -323,8 +293,14 @@
                 }
                 var loader = new THREE.MZ3Loader();
                 if (isURL) {
-                    loader.load(url, function(geometry) {
+                    loader.load(url,  function(geometry) {
+                		//console.log('Loaded '+fnm);
                         loadGeometryCore(geometry, isOverlay);
+                        //console.log('Geo Loaded '+fnm);
+                        busy = false;
+                        if (urlOverlay !== "")
+                        	loadGeometry(urlOverlay, true, true);
+
                     }, onProgress, onError);
                 } else {
                     var reader = new FileReader();
@@ -332,10 +308,9 @@
                     reader.addEventListener('load', function(event) {
                         var object = loader.parse(event.target.result);
                         loadGeometryCore(object, isOverlay);
+                        busy = false;
                     });
-
                 }
-                busy = false;
                 return true;
 
                 var onProgress = function(xhr) {
@@ -363,7 +338,6 @@
                         loadGeometryOverlay(geometry);
                         return;
                     }
-                    //ofolder.close();
                     if (mesh !== null) {
                         scene.remove(mesh);
                         mesh.geometry.dispose();
@@ -396,7 +370,7 @@
                     mesh.renderOrder = 1;
                     scene.add(mesh);
                     //busy = false;
-                    forceRefresh();
+                    cameraReset();
                 } //loadGeometryCore
 
                 function loadGeometryOverlay(geometry) {
@@ -416,7 +390,7 @@
                     materialChange();
                     scene.add(overlay);
                     //busy = false;
-                    forceRefresh();
+                    cameraReset();
                 } //loadGeometryOverlay
             } //loadGeometry()
 
@@ -434,7 +408,7 @@
                 }
                 camera.updateProjectionMatrix();
                 renderer.setSize(w, h);
-                forceRefresh();
+                cameraReset();
             }
 
             function materialChange() {
@@ -486,7 +460,18 @@
                 render();
             }
 
-            function forceRefresh() {
+            function render() {
+                if (!isPerspective) {
+                    var dist = camera.position.distanceTo(scene.position);
+                    var mn = Math.min(window.innerHeight, window.innerWidth) * 1.0;
+                    camera.zoom = (dist / defaultDistance) * mn;
+                    camera.updateProjectionMatrix();
+                }
+                camera.lookAt(scene.position);
+                renderer.render(scene, camera);
+            }
+
+            function cameraReset() {
                 var dist = camera.position.distanceTo(scene.position);
                 controls.reset();
                 camera.position.set(dist, 0, 0);
@@ -497,14 +482,24 @@
             function onButtonClick(event) {
                 var el = this.parentNode;
                 el.style.display = "none";
-                setTimeout(function() {
+                setTimeout(function() { //close menu
                     el.style.removeProperty("display");
-                }, 30);
+                }, 500);
+                //console.log(event.target.id);
+                if(event.target.id.charAt(0) === '_') { //load mesh
+ 					s = event.target.id.substr(1);
+					loadGeometry(s);
+					return;
+                }
+                if(event.target.id.charAt(0) === '^') { //load overlay
+ 					s = event.target.id.substr(1);
+					loadGeometry(s, true, true);
+					return;
+                }
                 if (event.target.id === "Open") {
                     openDialog.click();
                     return;
                 }
-                //console.log(event.target.id);
                 if (event.target.id === "OpenOverlay") {
                     openOverlayDialog.click();
                     //alert("Surfice by Chris Rorden");
@@ -577,17 +572,6 @@
                 } else {
                     location.replace(uri);
                 }
-            }
-
-            function render() {
-                if (!isPerspective) {
-                    var dist = camera.position.distanceTo(scene.position);
-                    var mn = Math.min(window.innerHeight, window.innerWidth) * 1.0;
-                    camera.zoom = (dist / defaultDistance) * mn;
-                    camera.updateProjectionMatrix();
-                }
-                camera.lookAt(scene.position);
-                renderer.render(scene, camera);
             }
 
             function setupDragDrop() {
