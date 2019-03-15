@@ -255,7 +255,6 @@
                 var folderG = gui.addFolder('Scene');
                 folderG.add(parameters, 'axesHelper').name('Axes Helper').onFinishChange(function() {
                     materialChange();
-			ofolder.close();
                 });
                 folderG.addColor(parameters, 'backColor').name('Back Color').onChange(function() {
                     materialChange();
@@ -297,7 +296,9 @@
                     materialChange();
                 });
                 ofolder.close();
-                gui.open();
+		folderG.close();
+		folder.close();
+		gui.open();
                 //load startup mesh
                 loadGeometry('MR_mesh_qr.mz3');
                 window.addEventListener('resize', onWindowResize, false);
